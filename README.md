@@ -35,10 +35,12 @@ to run this by hand.
 
 First time round you'll need to make some symbolic links:
 
-  ln -s BaseOS/EFI
-  ln -s BaseOS/images
-  ln -s BaseOS/isolinux
-  ln -s BaseOS/media.repo
+```
+ln -s BaseOS/EFI
+ln -s BaseOS/images
+ln -s BaseOS/isolinux
+ln -s BaseOS/media.repo
+```
 
 The resulting tree should look something like:
 
