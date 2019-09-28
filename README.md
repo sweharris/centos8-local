@@ -45,7 +45,7 @@ ln -s BaseOS/media.repo
 The resulting tree should look something like:
 
 ```
-% ls -lgo
+% ls -algo
 total 48
 drwxr-xr-x 4 4096 Sep 28 06:25 ./
 drwxr-xr-x 9 4096 Sep 27 19:04 ../
