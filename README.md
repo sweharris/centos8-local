@@ -10,7 +10,7 @@ pushed straight into the BaseOS or AppStream trees, and these are
 a super-set of the files on the DVD.  Everything on the DVD is in the
 mirror, so it's a waste of disk space to store the files twice.
 
-So, instead, I worked out what to mirror from upstead and what needs to
+So, instead, I worked out what to mirror from upstream and what needs to
 be done to make the result usable for kickstart purposes.
 
 These are my scripts and suitable for my setup.  They will need changing
