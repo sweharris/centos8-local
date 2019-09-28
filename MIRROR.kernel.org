@@ -1,0 +1,22 @@
+#!/bin/sh
+VER=8
+cd /CentOS/DVD/CentOS-$VER || exit
+
+DIRS="AppStream BaseOS"
+
+mkdir -p $DIRS
+
+if [ -n "$DEBUG" ]
+then
+  q=v
+  set -x
+else
+  q=q
+fi
+
+for d in $DIRS
+do
+  rsync --delete -rlptDzH$q rsync://mirrors.kernel.org/centos/$VER/$d/x86_64/os/ $d/
+done
+
+./make-treeinfo

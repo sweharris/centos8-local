@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+my $tree=".treeinfo";
+
+my %sections=();
+
+@{$sections{'media'}}=("discnum = 1","totaldiscs = 1");
+@{$sections{'stage2'}}=("mainimage = images/install.img");
+
+my $title="";
+foreach my $file (<*/$tree>)
+{
+  my $base=$file;
+  $base=~s!/.*$!!;
+
+  open(F,"<$file");
+  while (<F>)
+  {
+    chomp;
+    if (/^\[(.*)]$/)
+    {
+      if (defined($sections{$1}))
+      {
+        ## print STDERR "Skipping $1 in $file because already defined\n";
+        $title="";
+      }
+      else
+      {
+        $title=$1;
+      }
+      next;
+    }
+    next if /^$/;
+   
+    s/^(repository = ).*$/$1$base/;
+    s/^(packages = )/$1$base\//;
+    s/^(packagedir = )/$1$base\//;
+    s/^(variants = ).*$/${1}AppStream,BaseOS/;
+    s/^(platforms = .*)/$1,xen/;
+
+    push(@{$sections{$title}},$_) if $title;
+  }
+}
+
+my $new="";
+foreach my $t (sort keys %sections)
+{
+  $new .= "[$t]\n";
+  $new .= join("\n",@{$sections{$t}});
+  $new .= "\n";
+  $new .= "\n";
+}
+
+my $old=`cat $tree`;
+
+if ($new ne $old)
+{
+  print "Treeinfo changed\n";
+  rename("$tree","$tree.old") || die "rename: $!\n";
+  open(F,">$tree");
+  print F $new;
+}

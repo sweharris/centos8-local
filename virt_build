@@ -1,0 +1,125 @@
+#!/bin/ksh -p
+
+if [ ! -w /etc/passwd ]
+then
+  echo Not root
+  exit
+fi
+
+IMAGES=/var/lib/libvirt/images
+XML=/etc/libvirt/qemu
+
+file=0
+graphics="--nographics"
+console="console=ttyS0,9600"
+text="text"
+os=7
+ks=""
+repo=""
+hardware=""
+ram=1536  # During install phase
+STANDARD_RAM=512
+dsize=10  # Disk size in GB
+lvm=Raid10
+ksdev=eth0
+
+while getopts fg678d:l:r: OPT
+do
+  case $OPT in
+    f) file=1 ;;
+    6) ks=6 ; repo=http://repo/CentOS/DVD/CentOS-6 ;;
+    7) ks=7 ; repo=http://repo/CentOS/DVD/CentOS-7 ;;
+    8) ks=8 ; repo=http://repo/CentOS/DVD/CentOS-8/ ; ksdev=ens3 ; ram=3073 ;;
+    g) graphics="" ; text="" ; console="" ;;
+    d) dsize=$OPTARG ;;
+    l) lvm=$OPTARG ;;
+    r) STANDARD_RAM=$OPTARG ;;
+  esac
+done
+
+if [ -z "$repo" ]
+then
+  echo Need at least -6 or -7 or -8
+  exit
+fi
+
+shift $(($OPTIND - 1))
+
+machine=$1
+mac=$2  # optional
+
+if [ -z "$machine" ]
+then
+  echo "Syntax: ${0##*/} -6|-7|-8 [-f] [-g] [-d#] [r#] [-l LVM] machine_name [MAC]"
+  echo "  f==> files, not LVM."
+  echo "  d==> disk size in Gb; default=4"
+  echo "  l==> LVM volume group; default=Raid10"
+  echo "  r==> RAM size in Mb; default=512"
+  exit
+fi
+
+if [ $file = 1 ]
+then
+  destfile=$IMAGES/$machine.img
+else
+  destfile=/dev/$lvm/vm.$machine
+fi
+
+if [ -r $XML/$machine.xml ]
+then
+  echo $XML/$machine.xml already exists
+  echo aborted
+  exit
+fi
+
+if [ -e $destfile ]
+then
+  echo $destfile already exists
+  echo aborted
+  exit
+fi
+
+if [ -n "$mac" ]
+then
+  case $mac in
+    [0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]) # Looks good!
+                      mac=",mac=$mac"
+                      ;;
+                   *) echo Bad format MAC address
+                      exit
+  esac
+fi
+
+echo Building VM
+echo Starting at $(date)
+d=$(date +%s)
+
+if [ $file = 0 ]
+then
+  lvcreate -L ${dsize}G -n vm.$machine $lvm || exit
+else
+  destfile=$destfile,size=${dsize}
+fi
+
+set -x
+
+virt-install \
+--noreboot \
+-n $machine \
+-r $ram \
+--vcpus=1 \
+--os-variant=rhel$os \
+--accelerate \
+-v \
+--network=bridge=br0$mac,target=v-$machine \
+--disk path=$destfile \
+-l $repo \
+$graphics $hardware \
+-x "ks=http://10.0.0.137/CentOS/kickstart/centos$ks.cfg ksdevice=$ksdev ip=dhcp $console"
+
+virsh setmaxmem $machine ${STANDARD_RAM}M --config
+virsh setmem $machine ${STANDARD_RAM}M --config
+virsh start $machine
+
+echo Build finished at $(date)
+virsh console $machine
