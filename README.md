@@ -1,4 +1,4 @@
-# How I build CentOS 8 VMs locally
+# How I build CentOS 8 or Rocky 8 VMs locally
 
 ## Why?
 I use KVM to build a number of virtual servers.  I _like_ to have all
@@ -20,9 +20,17 @@ to work for you.
 
 Firstly, create a root for the tree.  In my case I call it `/CentOS/DVD/CentOS-8`.   I have this available on my webserver as `http://repo/CentOS/DVD/CentOS-8/`
 
+Similarly, for Rocky 8, create a root for the tree.  In my case I call it `/CentOS/DVD/Rocky-8`.   I have this available on my webserver as `http://repo/CentOS/DVD/Rocky-8/`
+
+You need to create a blank file `.treeinfo` in the base directory
+
+```
+touch .treeinfo
+```
 
 Now mirror the AppStream and BaseOS directories.  The file `MIRROR.kernel.org`
-will do this from the `kernel.org` server.  Pick a server that you like!
+will do this from the `kernel.org` server.  Pick a server that you like!  The
+file `MIRROR.rockylinux` is what I use for Rocky 8.
 
 First time you run this will take a while; it's around 12Gb.  You can
 re-run this script as often as you like, to keep your tree local.
@@ -40,7 +48,6 @@ ln -s BaseOS/EFI
 ln -s BaseOS/images
 ln -s BaseOS/isolinux
 ln -s BaseOS/media.repo
-touch .treeinfo
 ```
 
 The resulting tree should look something like:
@@ -63,7 +70,7 @@ lrwxrwxrwx 1   17 Sep 27 17:03 media.repo -> BaseOS/media.repo
 
 ## Creating the kickstart
 
-The attached `centos8.cfg` is one that works for me and creates a
+The attached `centos8.cfg` and `rocky8.cfg` work for me and creates a
 mostly minimal setup.   It's about 1.2Gb on the root partition.
 Since my small VMs are typically only allocated 10Gb of disk I don't
 do any fancy LVM setup or clever partitioning; just a boot, root, swap.
@@ -79,4 +86,4 @@ way I use it) it can easily run in under 500Mb.  So this script will
 run the install with lots of memory, then after install has complete
 it will resize the virtual machine and reboot it.
 
-On my old machine the whole process takes around 7 minutes.
+On my old machine the whole process takes around 10 minutes.
