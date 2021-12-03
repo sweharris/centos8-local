@@ -40,6 +40,7 @@ ln -s BaseOS/EFI
 ln -s BaseOS/images
 ln -s BaseOS/isolinux
 ln -s BaseOS/media.repo
+touch .treeinfo
 ```
 
 The resulting tree should look something like:
